@@ -21,7 +21,7 @@ from playhouse.db_url import connect
 DB = connect(os.environ.get('DATABASE_URL') or 'sqlite:///predictions.db')
 
 class Prediction(Model):
-    observation_id = IntegerField(unique=True)
+    id = IntegerField(unique=True)
     observation = TextField()
     proba = FloatField()
     true_class = IntegerField(null=True)
@@ -90,7 +90,7 @@ def predict():
 def update():
     obs = request.get_json()
     try:
-        p = Prediction.get(Prediction.observation_id == obs['id'])
+        p = Prediction.get(Prediction.id == obs['id'])
         p.true_class = obs['true_class']
         p.save()
         return jsonify(model_to_dict(p))
