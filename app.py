@@ -21,7 +21,7 @@ from playhouse.db_url import connect
 DB = connect(os.environ.get('DATABASE_URL') or 'sqlite:///predictions.db')
 
 class Prediction(Model):
-    id = IntegerField(unique=True)
+    observation_id = IntegerField(unique=True)
     observation = TextField()
     proba = FloatField()
     true_class = IntegerField(null=True)
@@ -65,6 +65,11 @@ def predict():
     obs_dict = request.get_json()
     _id = obs_dict['id']
     observation = obs_dict['observation']
+    
+    # Validate 'hours-per-week' field
+    if not isinstance(observation.get('hours-per-week'), int):
+        return jsonify({'error': 'Observation is invalid!'}), 400
+    
     # Now do what we already learned in the notebooks about how to transform
     # a single observation into a dataframe that will work with a pipeline.
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
@@ -90,7 +95,7 @@ def predict():
 def update():
     obs = request.get_json()
     try:
-        p = Prediction.get(Prediction.id == obs['id'])
+        p = Prediction.get(Prediction.observation_id == obs['id'])
         p.true_class = obs['true_class']
         p.save()
         return jsonify(model_to_dict(p))
